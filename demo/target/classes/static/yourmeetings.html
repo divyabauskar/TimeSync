@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Meetings - TimeSync</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
+    <style>
+        :root {
+            --sidebar-bg: #0f172a;
+            --accent: #38bdf8;
+            --bg-main: #f1f5f9;
+            --card-white: #ffffff;
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
+            --border-sharp: #e2e8f0;
+            --radius: 4px;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-main);
+            background-image: radial-gradient(#d1d5db 0.5px, transparent 0.5px);
+            background-size: 24px 24px;
+            display: flex;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 240px;
+            height: 100vh;
+            background: var(--sidebar-bg);
+            position: fixed;
+            padding-top: 40px;
+            box-shadow: 4px 0 10px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+
+        .sidebar h2 {
+            padding: 0 30px;
+            color: #fff;
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            margin-bottom: 40px;
+            text-transform: uppercase;
+        }
+
+        .sidebar a {
+            display: block;
+            padding: 14px 30px;
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            border-left: 4px solid transparent;
+            transition: 0.2s;
+        }
+
+        .sidebar a:hover, .sidebar a.active {
+            background: rgba(255,255,255,0.05);
+            color: #fff;
+            border-left-color: var(--accent);
+        }
+
+        /* Content Area */
+        .content {
+            margin-left: 240px;
+            padding: 60px;
+            width: calc(100% - 240px);
+        }
+
+        .card {
+            background: var(--card-white);
+            padding: 40px;
+            border-radius: var(--radius);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid var(--border-sharp);
+            margin-bottom: 40px;
+        }
+
+        h2, h3 { color: var(--text-dark); letter-spacing: -0.5px; }
+
+        label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        select, input[type="text"], input[type="date"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-sharp);
+            border-radius: var(--radius);
+            background: #f8fafc;
+            font-size: 14px;
+            margin-bottom: 24px;
+            font-family: inherit;
+        }
+
+        #buddyList {
+            max-height: 220px;
+            overflow-y: auto;
+            border: 1px solid var(--border-sharp);
+            background: #fff;
+            margin-bottom: 24px;
+            border-radius: var(--radius);
+        }
+
+        .buddy-row {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border-sharp);
+            gap: 15px;
+            font-size: 14px;
+        }
+
+        .buddy-slots { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+        .btn {
+            padding: 14px 24px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 0.05em;
+            border: none;
+            transition: 0.2s;
+        }
+
+        .btn-primary { background: var(--sidebar-bg); color: white; border: 1px solid var(--sidebar-bg); }
+        .btn-primary:hover { background: var(--accent); color: var(--sidebar-bg); border-color: var(--accent); }
+
+        .btn-success { background: #10b981; color: white; display: none; }
+        .btn-danger { background: #fff1f2; color: #be123c; border: 1px solid #fecaca; }
+
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 24px; }
+
+        .m-card {
+            background: white;
+            padding: 30px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border-sharp);
+            border-top: 4px solid var(--sidebar-bg);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .time-box {
+            background: #f1f5f9;
+            padding: 14px;
+            border-radius: 2px;
+            margin: 16px 0;
+            border-left: 4px solid var(--accent);
+        }
+
+        .modal {
+            position: fixed; inset: 0; background: rgba(15, 23, 42, 0.85);
+            display: none; align-items: center; justify-content: center;
+            z-index: 1000; backdrop-filter: blur(5px);
+        }
+
+        .modal-content { background: white; padding: 48px; border-radius: var(--radius); width: 400px; }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <h2>TimeZone</h2>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="yourprofile.html">Your Profile</a>
+    <a href="yourbuddy.html">Your Buddy</a>
+    <a href="yourmeetings.html" class="active">Meetings</a>
+    <a href="notifications.html">Notifications</a>
+    <a href="#" onclick="logout()">Logout</a>
+</div>
+
+<div class="content">
+    <span id="currentHostName" style="display:none"></span>
+
+    <div class="card">
+        <h2 style="margin-top:0">Plan a New Meeting</h2>
+
+        <label>1. Select Meeting Date</label>
+        <input type="date" id="meetingDate" onchange="updateDayFromDate()">
+
+        <label>2. Meeting Day (Auto-calculated)</label>
+        <select id="meetingDay" disabled>
+            <option value="Monday">Monday</option><option value="Tuesday">Tuesday</option>
+            <option value="Wednesday">Wednesday</option><option value="Thursday">Thursday</option>
+            <option value="Friday">Friday</option><option value="Saturday">Saturday</option>
+            <option value="Sunday">Sunday</option>
+        </select>
+
+        <label>3. Select Buddies</label>
+        <div id="buddyList"></div>
+
+        <div style="display: flex; gap: 10px;">
+            <button class="btn btn-primary" onclick="findOverlap()">Check Availability</button>
+            <button id="scheduleBtn" class="btn btn-success" onclick="openModal()">Schedule Meeting</button>
+        </div>
+    </div>
+
+    <h3>Upcoming Meetings</h3>
+    <div id="meetingsGrid" class="grid"></div>
+</div>
+
+<div id="meetingModal" class="modal">
+    <div class="modal-content">
+        <h3>Meeting Details</h3>
+        <label>Title:</label>
+        <input type="text" id="meetingTitle" placeholder="e.g., Weekly Sync">
+        <label>Platform:</label>
+        <select id="meetingPlatform">
+            <option value="Google Meet">Google Meet</option>
+            <option value="Zoom">Zoom</option>
+            <option value="Microsoft Teams">Microsoft Teams</option>
+        </select>
+        <button id="saveBtn" class="btn btn-primary" style="width: 100%;" onclick="saveMeeting()">Confirm & Save</button>
+        <p onclick="closeModal()" style="text-align:center; cursor:pointer; font-size:12px; margin-top:15px; color:gray; text-decoration: underline;">Cancel</p>
+    </div>
+</div>
+
+<script>
+    const API_BASE = "http://localhost:8083";
+    const currentUserId = parseInt(localStorage.getItem("userId"));
+    const PLATFORM_URLS = {
+        "Google Meet": "https://meet.google.com/new",
+        "Zoom": "https://zoom.us/start/videomeeting",
+        "Microsoft Teams": "https://teams.microsoft.com/l/meeting/new"
+    };
+    let savedOverlap = null; // This variable stores the dynamically found overlap
+
+    function notify(message, type = "success") {
+        const isSuccess = type === "success";
+        const themeColor = isSuccess ? "#22c55e" : "#ef4444";
+        Toastify({
+            text: (isSuccess ? "● " : "● ") + message,
+            duration: 3500,
+            gravity: "top",
+            position: "right",
+            style: {
+                background: "#ffffff",
+                color: "#333333",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                borderRadius: "6px",
+                padding: "16px 20px",
+                fontWeight: "600",
+                fontSize: "14px",
+                borderBottom: `4px solid ${themeColor}`
+            }
+        }).showToast();
+    }
+
+    async function init() {
+        if (!currentUserId) { window.location.href = "login.html"; return; }
+        const dateInput = document.getElementById('meetingDate');
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.setAttribute('min', today);
+
+        await fetchUserInfo();
+        await loadBuddies();
+        await loadMeetings();
+    }
+
+    function updateDayFromDate() {
+        const dateVal = document.getElementById('meetingDate').value;
+        if (!dateVal) return;
+        const date = new Date(dateVal);
+        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        document.getElementById('meetingDay').value = days[date.getDay()];
+        document.getElementById("scheduleBtn").style.display = "none";
+    }
+
+    async function fetchUserInfo() {
+        const res = await fetch(`${API_BASE}/profile/${currentUserId}`);
+        const data = await res.json();
+        document.getElementById("currentHostName").innerText = data.username || "Host";
+    }
+
+    async function loadBuddies() {
+        const res = await fetch(`${API_BASE}/buddy/accepted/${currentUserId}`);
+        const buddies = await res.json();
+        const container = document.getElementById("buddyList");
+        container.innerHTML = "";
+        buddies.forEach(b => {
+            const buddyId = b.senderId == currentUserId ? b.receiverId : b.senderId;
+            const buddyName = b.senderId == currentUserId ? b.receiverUsername : b.senderUsername;
+            container.innerHTML += `
+                <div class="buddy-row">
+                    <input type="checkbox" class="buddy-select" value="${buddyId}" data-name="${buddyName}">
+                    <div>
+                        <b style="color:var(--text-dark)">${buddyName}</b>
+                        <div class="buddy-slots" id="slot-info-${buddyId}">Loading slots...</div>
+                    </div>
+                </div>`;
+            fetchBuddySlots(buddyId, `slot-info-${buddyId}`);
+        });
+    }
+
+    async function fetchBuddySlots(id, el) {
+        const res = await fetch(`${API_BASE}/compare/slots-for-me?buddyId=${id}`);
+        const data = await res.json();
+        document.getElementById(el).innerText = data.length > 0 ? data.map(s => `${s.day}: ${s.startTime}-${s.endTime}`).join(", ") : "No slots set";
+    }
+
+    async function findOverlap() {
+        const dateVal = document.getElementById("meetingDate").value;
+        if (!dateVal) { notify("Please select a date first", "error"); return; }
+        const selected = Array.from(document.querySelectorAll(".buddy-select:checked")).map(i => parseInt(i.value));
+        if (selected.length === 0) { notify("Select at least one buddy", "error"); return; }
+
+        const day = document.getElementById("meetingDay").value;
+        const res = await fetch(`${API_BASE}/compare/find-overlap`, {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ myId: currentUserId, buddyIds: selected, day: day })
+        });
+        const data = await res.json();
+
+        if (data.available || data.overlapFound) {
+            const start = data.startTime || data.startUtc;
+            const end = data.endTime || data.endUtc;
+
+            // Storing calculated overlap in variable instead of hardcoded strings
+            savedOverlap = { startTime: start, endTime: end, day: day, date: dateVal };
+
+            notify(`Overlap Found: ${start} - ${end}`);
+            document.getElementById("scheduleBtn").style.display = "inline-block";
+        } else {
+            notify("No common free time found.", "error");
+            document.getElementById("scheduleBtn").style.display = "none";
+        }
+    }
+
+    function openModal() { document.getElementById("meetingModal").style.display = "flex"; }
+    function closeModal() { document.getElementById("meetingModal").style.display = "none"; }
+
+    async function saveMeeting() {
+        const title = document.getElementById("meetingTitle").value;
+        if(!title) { notify("Enter a meeting title", "error"); return; }
+
+        const selectedElements = Array.from(document.querySelectorAll(".buddy-select:checked"));
+        if(selectedElements.length === 0) { notify("No buddies selected", "error"); return; }
+
+        // --- DYNAMIC CONFLICT CHECK START ---
+        // Replacing hardcoded 18:00 with variables from savedOverlap
+        const userId = currentUserId;
+        const start = savedOverlap.startTime;
+        const end = savedOverlap.endTime;
+        const date = savedOverlap.date;
+
+        try {
+            const conflictRes = await fetch(`${API_BASE}/meetings/check-conflict?userId=${userId}&date=${date}&start=${start}&end=${end}`);
+            const isConflict = await conflictRes.json();
+
+            if (isConflict) {
+                notify("Action Denied: You already have a meeting scheduled during this time window!", "error");
+                closeModal();
+                return; // Stop scheduling
+            }
+        } catch (error) {
+            console.error("Conflict verification failed", error);
+        }
+        // --- DYNAMIC CONFLICT CHECK END ---
+
+        const payload = {
+            hostId: currentUserId,
+            hostUsername: document.getElementById("currentHostName").innerText,
+            title: title,
+            platform: document.getElementById("meetingPlatform").value,
+            startTime: start,
+            endTime: end,
+            day: savedOverlap.day,
+            date: date,
+            buddyNames: selectedElements.map(el => el.dataset.name).join(", "),
+            participantIds: selectedElements.map(el => parseInt(el.value)),
+            hostTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+        };
+
+        const res = await fetch(`${API_BASE}/meetings/schedule`, {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+
+        if(res.ok) {
+            notify("Meeting scheduled!");
+            closeModal();
+            document.getElementById("meetingTitle").value = "";
+            loadMeetings();
+        } else {
+            notify("Failed to save meeting", "error");
+        }
+    }
+
+    async function loadMeetings() {
+        const res = await fetch(`${API_BASE}/meetings/user/${currentUserId}`);
+        const data = await res.json();
+        const container = document.getElementById("meetingsGrid");
+        container.innerHTML = "";
+
+        data.forEach(m => {
+            const isHost = m.hostId === currentUserId;
+
+            let displayDay = m.day;
+            let displayDate = m.date;
+            let displayTime = `${m.startTime} - ${m.endTime}`;
+
+            if (m.hostTimezone && m.date) {
+                try {
+                    const hostStart = new Date(`${m.date}T${m.startTime}:00`);
+                    const hostEnd = new Date(`${m.date}T${m.endTime}:00`);
+
+                    const hostLocalString = hostStart.toLocaleString("en-US", { timeZone: m.hostTimezone });
+                    const hostLocalObject = new Date(hostLocalString);
+                    const diff = hostStart.getTime() - hostLocalObject.getTime();
+
+                    const localDate = new Date(hostStart.getTime() + diff);
+                    const localDateEnd = new Date(hostEnd.getTime() + diff);
+
+                    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                    displayDay = days[localDate.getDay()];
+                    displayDate = localDate.toISOString().split('T')[0];
+                    displayTime = localDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) +
+                                  " - " +
+                                  localDateEnd.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+                } catch (e) { console.error("TZ conversion error", e); }
+            }
+
+            container.innerHTML += `
+                <div class="m-card">
+                    <h3 style="margin:0 0 10px 0">${m.title}</h3>
+                    <div class="time-box">
+                        <div style="font-weight:800; color:var(--sidebar-bg)">${displayDay}</div>
+                        <div style="font-size:12px; color:var(--text-muted); margin-bottom:5px;">${displayDate}</div>
+                        <div style="font-size:14px; font-weight:600;">${displayTime} <span style="font-size:10px; opacity:0.7">(Local)</span></div>
+                    </div>
+                    <p style="font-size:13px; color:var(--text-muted)">
+                        <b>Platform:</b> ${m.platform}<br>
+                        <b>With:</b> ${isHost ? m.buddyNames : m.hostUsername}
+                    </p>
+                    <div style="margin-top:auto; display:flex; gap:10px;">
+                        <a href="${PLATFORM_URLS[m.platform]}" target="_blank" class="btn btn-primary" style="flex:1; text-align:center; text-decoration:none;">Join</a>
+                        ${isHost ? `<button onclick="deleteMeeting(${m.id})" class="btn btn-danger">Cancel</button>` : ''}
+                    </div>
+                </div>`;
+        });
+    }
+
+    async function deleteMeeting(id) {
+        if(!confirm("Cancel this meeting?")) return;
+        const res = await fetch(`${API_BASE}/meetings/delete/${id}`, {method:'DELETE'});
+        if(res.ok) { notify("Meeting deleted"); loadMeetings(); }
+    }
+
+    function logout() { localStorage.clear(); window.location.href="login.html"; }
+    window.onload = init;
+</script>
+</body>
+</html>

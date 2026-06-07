@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        :root {
+            /* High Contrast Palette */
+            --sidebar-bg: #0f172a;        /* Deep Obsidian */
+            --sidebar-text: #94a3b8;
+            --sidebar-active: #ffffff;
+            --accent-glow: #38bdf8;       /* Electric Blue */
+            --bg-main: #f1f5f9;           /* Soft Concrete */
+            --card-white: #ffffff;
+            --text-headline: #1e293b;
+            --border-sharp: #e2e8f0;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', 'Segoe UI', sans-serif;
+            background: var(--bg-main);
+            display: flex;
+        }
+
+        /* Sidebar - Executive Obsidian */
+        .sidebar {
+            width: 260px;
+            height: 100vh;
+            background: var(--sidebar-bg);
+            position: fixed;
+            padding-top: 40px;
+            box-shadow: 4px 0 10px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+
+        .sidebar h2 {
+            text-align: left;
+            padding: 0 30px;
+            color: white;
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            margin-bottom: 50px;
+            display: flex;
+            align-items: center;
+        }
+
+        /* Visual accent for the logo */
+        .sidebar h2::before {
+            content: "";
+            width: 4px;
+            height: 24px;
+            background: var(--accent-glow);
+            margin-right: 12px;
+            border-radius: 2px;
+        }
+
+        .sidebar a {
+            display: block;
+            padding: 14px 30px;
+            color: var(--sidebar-text);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+        }
+
+        .sidebar a:hover {
+            color: white;
+            background: rgba(255,255,255,0.05);
+        }
+
+        .sidebar a.active {
+            background: rgba(56, 189, 248, 0.1);
+            color: white;
+            border-left: 4px solid var(--accent-glow);
+        }
+
+        /* Main Content */
+        .content {
+            margin-left: 260px;
+            padding: 60px;
+            width: 100%;
+        }
+
+        .card {
+            background: var(--card-white);
+            padding: 35px;
+            border-radius: 8px;
+            border: 1px solid var(--border-sharp);
+            /* Subtle elevation */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+
+        h3 {
+            color: var(--text-headline);
+            font-size: 20px;
+            margin-top: 0;
+            font-weight: 700;
+        }
+
+        /* ID Display - Technical High-Contrast */
+        .user-id-text {
+            display: inline-block;
+            background: #1e293b;
+            color: #38bdf8;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', 'Consolas', monospace;
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="sidebar">
+    <h2>Dashboard</h2>
+    <a href="yourprofile.html">Your Profile</a>
+    <a href="yourbuddy.html">Your Buddy</a>
+    <a href="yourmeetings.html">Meetings</a>
+    <a href="notifications.html">Notifications</a>
+    <a href="#" onclick="logout()">Logout</a>
+</div>
+
+<div class="content">
+    <div class="card">
+        <span class="user-id-text" id="idDisplay">ID: 1</span>
+
+        <h3 id="welcomeMsg">Welcome, Guest 👋</h3>
+
+        <p>Select an option from the left panel.</p>
+    </div>
+</div>
+
+<script>
+    // Grab the data saved by your login.html
+    const savedName = localStorage.getItem("fullName");
+    const savedId = localStorage.getItem("userId");
+
+    // If data exists, update the screen. If not, show defaults for testing.
+    if (savedId && savedName) {
+        document.getElementById("idDisplay").innerText = `ID: ${savedId}`;
+        document.getElementById("welcomeMsg").innerText = `Welcome, ${savedName} 👋`;
+    } else {
+        document.getElementById("idDisplay").innerText = `ID: 1 (Default)`;
+        document.getElementById("welcomeMsg").innerText = `Welcome, Guest 👋`;
+    }
+
+    function logout() {
+        localStorage.clear();
+        window.location.href = "login.html";
+    }
+</script>
+
+</body>
+</html>

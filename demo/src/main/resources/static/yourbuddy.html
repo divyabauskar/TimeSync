@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>TimezoneBuddies | Manage Buddies</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
+    <style>
+        :root {
+            --sidebar-bg: #0f172a;
+            --accent: #38bdf8;
+            --bg-main: #f1f5f9;
+            --card-white: #ffffff;
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --radius: 4px;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-main);
+            background-image: radial-gradient(#d1d5db 0.5px, transparent 0.5px);
+            background-size: 24px 24px;
+        }
+
+        /* --- React-Style Toastify Customization --- */
+        .toastify {
+            background: #ffffff !important; /* White background like your image */
+            color: #333 !important;
+            padding: 16px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            position: relative;
+            overflow: hidden; /* Needed for the progress bar */
+        }
+
+        /* The Progress Bar Animation */
+        .toastify::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 4px;
+            width: 100%;
+            animation: progress 3.5s linear forwards;
+        }
+
+        @keyframes progress {
+            from { width: 100%; }
+            to { width: 0%; }
+        }
+
+        /* Success Theme (Green) */
+        .toast-success::after { background: #22c55e; }
+        .toast-success { border-left: 0; }
+
+        /* Error Theme (Red) */
+        .toast-error::after { background: #ef4444; }
+        .toast-error { border-left: 0; }
+
+        /* Layout Styles */
+        .container { margin-left: 240px; padding: 50px 60px; }
+        .card {
+            background: var(--card-white);
+            padding: 40px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        h3 { margin-top: 0; font-weight: 800; color: var(--text-dark); }
+
+        button {
+            padding: 12px 20px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border: none;
+        }
+
+        .add-btn { background: var(--sidebar-bg); color: white; }
+        .reject { background: #450a0a; color: #f87171; border: 1px solid #f87171; }
+
+        table { width: 100%; margin-top: 30px; border-collapse: collapse; }
+        th { padding: 16px 12px; font-size: 11px; text-transform: uppercase; border-bottom: 2px solid var(--border-color); text-align: left; color: var(--text-muted); }
+        td { padding: 16px 12px; border-bottom: 1px solid var(--border-color); color: var(--text-dark); }
+
+        .modal {
+            position: fixed; inset: 0; background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(4px); display: none; justify-content: center; align-items: center; z-index: 1000;
+        }
+        .modal-content { background: white; padding: 40px; width: 380px; border-radius: var(--radius); }
+        .modal-content input { width: 100%; padding: 12px; margin: 20px 0; border: 1px solid var(--border-color); border-radius: var(--radius); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="card">
+        <h3>Your Buddies</h3>
+        <button class="add-btn" onclick="openAddModal()">Add New Buddy</button>
+
+        <div id="noBuddy" style="margin-top:20px; color:var(--text-muted); font-style:italic;">
+            No buddies found. Start connecting!
+        </div>
+
+        <table id="buddyTable" style="display:none;">
+            <thead>
+            <tr>
+                <th>Buddy Name</th>
+                <th>Country</th>
+                <th>Email</th>
+                <th>Action</th>
+            </tr>
+            </thead>
+            <tbody id="buddyBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal" id="addModal">
+    <div class="modal-content">
+        <h3>Add Buddy</h3>
+        <input type="text" id="buddyUsernameInput" placeholder="Username">
+        <button class="add-btn" style="width: 100%;" onclick="addBuddy()">Send Request</button>
+        <button style="margin-top:10px; width: 100%; background: #f1f5f9;" onclick="closeModal()">Cancel</button>
+    </div>
+</div>
+
+<script>
+    const API_URL = "http://localhost:8083";
+    const loggedInUserId = localStorage.getItem("userId");
+
+    window.onload = loadBuddies;
+
+    // --- Updated Notification Utility for the "React Toastify" look ---
+    function notify(message, type = "success") {
+        const isSuccess = type === "success";
+
+        // Icons based on your uploaded image
+        const iconHtml = isSuccess
+            ? `<span style="color: #22c55e; margin-right: 12px; font-size: 18px;">●</span>`
+            : `<span style="color: #ef4444; margin-right: 12px; font-size: 18px;">●</span>`;
+
+        Toastify({
+            node: createToastNode(iconHtml, message), // Custom node to allow HTML icons
+            duration: 3500,
+            gravity: "top",
+            position: "right",
+            className: isSuccess ? "toast-success" : "toast-error",
+            stopOnFocus: true,
+            escapeMarkup: false // Allows the icon HTML to render
+        }).showToast();
+    }
+
+    function createToastNode(icon, text) {
+        const div = document.createElement("div");
+        div.style.display = "flex";
+        div.style.alignItems = "center";
+        div.innerHTML = `${icon} <span>${text}</span>`;
+        return div;
+    }
+
+    function openAddModal() { document.getElementById("addModal").style.display = "flex"; }
+    function closeModal() { document.getElementById("addModal").style.display = "none"; }
+
+    function addBuddy() {
+        const input = document.getElementById("buddyUsernameInput");
+        const val = input.value.trim();
+        if (!val) { notify("Please enter a username", "error"); return; }
+
+        fetch(`${API_URL}/buddy/add`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: parseInt(loggedInUserId), username: val })
+        })
+        .then(res => res.text())
+        .then(data => {
+            if (data === "success") {
+                notify("Buddy request sent successfully!");
+                closeModal();
+                input.value = "";
+                setTimeout(() => location.reload(), 1200);
+            } else {
+                notify(data, "error");
+            }
+        })
+        .catch(() => notify("Server connection failed", "error"));
+    }
+
+    function loadBuddies() {
+        fetch(`${API_URL}/buddy/list/${loggedInUserId}`)
+            .then(res => res.json())
+            .then(data => {
+                const body = document.getElementById("buddyBody");
+                const table = document.getElementById("buddyTable");
+                const emptyMsg = document.getElementById("noBuddy");
+
+                if (!data || data.length === 0) {
+                    emptyMsg.style.display = "block";
+                    table.style.display = "none";
+                    return;
+                }
+
+                emptyMsg.style.display = "none";
+                table.style.display = "table";
+                body.innerHTML = "";
+
+                data.forEach(b => {
+                    const isSender = b.senderId == loggedInUserId;
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
+                        <td><strong>${isSender ? b.receiverUsername : b.senderUsername}</strong></td>
+                        <td>${isSender ? b.receiverCountry : b.senderCountry}</td>
+                        <td>${isSender ? b.receiverEmail : b.senderEmail}</td>
+                        <td><button class="reject" onclick="deleteBuddy(${b.id}, this)">Remove</button></td>
+                    `;
+                    body.appendChild(row);
+                });
+            });
+    }
+
+    function deleteBuddy(id, btn) {
+        if(!confirm("Are you sure?")) return;
+        fetch(`${API_URL}/buddy/reject`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: id })
+        })
+        .then(res => {
+            if(res.ok) {
+                notify("Buddy removed successfully");
+                btn.closest("tr").remove();
+                if (document.getElementById("buddyBody").children.length === 0) location.reload();
+            } else {
+                notify("Action failed", "error");
+            }
+        })
+        .catch(() => notify("Connection error", "error"));
+    }
+</script>
+</body>
+</html>

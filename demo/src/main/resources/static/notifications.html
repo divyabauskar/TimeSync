@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Notifications - Buddy System</title>
+    <style>
+        :root {
+            --sidebar-bg: #0f172a;
+            --sidebar-active: #38bdf8;
+            --bg-main: #f1f5f9;
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --success-bright: #10b981; /* Emerald */
+            --error-bright: #ef4444;   /* Rose */
+        }
+
+        body { margin: 0; font-family: 'Inter', 'Segoe UI', sans-serif; background: var(--bg-main); }
+
+        /* Sidebar - Matching the High-Contrast Look */
+        .sidebar {
+            width: 240px;
+            height: 100vh;
+            background: var(--sidebar-bg);
+            position: fixed;
+            padding-top: 40px;
+            box-shadow: 4px 0 10px rgba(0,0,0,0.1);
+        }
+
+        .sidebar h2 { color: #fff; padding: 0 30px; text-align: left; font-size: 20px; font-weight: 800; }
+
+        .sidebar a {
+            display: block;
+            padding: 14px 30px;
+            color: #94a3b8;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            border-left: 4px solid transparent;
+        }
+
+        .sidebar a:hover, .sidebar a.active {
+            color: #fff;
+            background: rgba(255,255,255,0.05);
+            border-left-color: var(--sidebar-active);
+        }
+
+        /* Content & Card */
+        .content { margin-left: 240px; padding: 40px; }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 4px; /* Sharp corners for professional look */
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid var(--border-color);
+        }
+
+        /* Professional Table Styling */
+        table { width: 100%; border-collapse: collapse; margin-top: 25px; }
+
+        th {
+            background: #f8fafc;
+            color: var(--text-dark);
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 0.05em;
+            padding: 16px 12px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        td {
+            padding: 16px 12px;
+            color: var(--text-dark);
+            font-size: 14px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        tr:hover { background-color: #f9fafb; }
+
+        /* High-Contrast Buttons */
+        button {
+            padding: 8px 16px;
+            border-radius: 2px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            transition: all 0.2s;
+        }
+
+        /* Accept Button - Emerald Contrast */
+        .btn-acc {
+            background: #064e3b;
+            color: #10b981;
+            border: 1px solid #10b981;
+        }
+        .btn-acc:hover { background: #10b981; color: white; }
+
+        /* Reject Button - Crimson Contrast */
+        .btn-rej {
+            background: #450a0a;
+            color: #f87171;
+            border: 1px solid #f87171;
+        }
+        .btn-rej:hover { background: #ef4444; color: white; }
+
+        /* Modern Status Labels */
+        .status-label {
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 2px;
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+
+        .accepted {
+            color: var(--success-bright);
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .rejected {
+            color: var(--error-bright);
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        /* Tech-Style ID Text */
+        .user-id-text {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--sidebar-active);
+            background: #0f172a;
+            padding: 2px 6px;
+            font-size: 12px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <h2>Dashboard</h2>
+    <a href="dashboard.html">Home</a>
+    <a href="yourprofile.html">Your Profile</a>
+    <a href="yourbuddy.html">Your Buddy</a>
+    <a href="notifications.html" style="background: white; border-left: 4px solid #a395f5;">Notifications</a>
+    <a href="#" onclick="logout()">Logout</a>
+</div>
+
+<div class="content">
+    <div class="card">
+        <h3>Buddy Requests</h3>
+        <p>People who want to be your buddy:</p>
+
+        <table id="notifTable">
+            <thead>
+            <tr>
+                <th>From</th>
+                <th>Country</th>
+                <th>Email</th>
+                <th>Action</th>
+            </tr>
+            </thead>
+            <tbody id="notifBody">
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const API_URL = "http://localhost:8083";
+    const userId = localStorage.getItem("userId");
+
+    async function loadNotifications() {
+        if (!userId) {
+            window.location.href = "login.html";
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API_URL}/buddy/notifications/${userId}`);
+            const data = await res.json();
+            const body = document.getElementById("notifBody");
+            body.innerHTML = "";
+
+            data.forEach(req => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${req.senderUsername}</td>
+                    <td>${req.senderCountry}</td>
+                    <td>${req.senderEmail}</td>
+                    <td id="action-cell-${req.id}">
+                        <button class="btn-acc" onclick="handleAction(${req.id}, 'accept', this)">Accept</button>
+                        <button class="btn-rej" onclick="handleAction(${req.id}, 'reject', this)">Reject</button>
+                    </td>
+                `;
+                body.appendChild(row);
+            });
+        } catch (error) {
+            console.error("Error loading notifications:", error);
+        }
+    }
+
+    async function handleAction(requestId, type, btnElement) {
+        try {
+            const response = await fetch(`${API_URL}/buddy/${type}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: requestId })
+            });
+
+            if (response.ok) {
+                const cell = btnElement.parentElement;
+                const row = cell.parentElement; // Get the table row
+
+                if (type === 'accept') {
+                    cell.innerHTML = `<span class="status-label accepted">Accepted</span>`;
+                } else {
+                    cell.innerHTML = `<span class="status-label rejected">Rejected</span>`;
+                }
+
+                // NEW LOGIC: Remove the row after 1 second so it doesn't stay in notifications
+                // Since status is now updated in DB, it won't reappear on reload.
+                setTimeout(() => {
+                    row.classList.add('fade-out');
+                    setTimeout(() => {
+                        row.remove();
+                        // If no more requests, you could show a "No notifications" message here
+                    }, 500);
+                }, 1000);
+
+            } else {
+                alert("Action failed on server.");
+            }
+        } catch (error) {
+            console.error("Connection error:", error);
+            alert("Cannot connect to server.");
+        }
+    }
+
+    function logout() {
+        localStorage.clear();
+        window.location.href = "login.html";
+    }
+
+    window.onload = loadNotifications;
+</script>
+</body>
+</html>

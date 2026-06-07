@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>TimezoneBuddies | Profile</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
+    <style>
+        :root {
+            --sidebar-bg: #0f172a;
+            --accent: #38bdf8;
+            --bg-main: #f1f5f9;
+            --card-white: #ffffff;
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
+            --border-sharp: #e2e8f0;
+            --radius: 4px;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-main);
+            background-image: radial-gradient(#d1d5db 0.5px, transparent 0.5px);
+            background-size: 24px 24px;
+            color: var(--text-dark);
+        }
+
+        .container { min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 40px; }
+
+        .profile-card {
+            background: var(--card-white);
+            width: 100%; max-width: 480px;
+            padding: 48px; border-radius: var(--radius);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border-sharp);
+        }
+
+        .avatar-container {
+            width: 80px; height: 80px; background: var(--sidebar-bg);
+            border-radius: var(--radius); margin: 0 auto 24px;
+            display: flex; align-items: center; justify-content: center;
+            border: 1px solid var(--accent);
+        }
+        .avatar-container svg { width: 40px; height: 40px; fill: var(--accent); }
+
+        .info-section { background: #f8fafc; padding: 24px; border-radius: var(--radius); margin-bottom: 32px; border: 1px solid var(--border-sharp); }
+        .info-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border-sharp); }
+        .info-row:last-child { border-bottom: none; }
+
+        .label { font-weight: 700; color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; }
+        .value { color: var(--text-dark); font-size: 14px; font-weight: 600; }
+
+        .action-links { display: flex; justify-content: center; gap: 24px; margin-bottom: 32px; border-top: 1px solid var(--border-sharp); padding-top: 24px; }
+        .action-links span { cursor: pointer; font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+        .timeslot-btn { color: #10b981; }
+        .logout-btn { color: #ef4444; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { text-align: left; color: var(--text-muted); padding: 8px 0; font-size: 11px; text-transform: uppercase; border-bottom: 2px solid var(--border-sharp); }
+        td { padding: 12px 0; border-bottom: 1px solid var(--border-sharp); font-size: 13px; }
+
+        .modal { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.8); display: none; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(4px); }
+        .modal-box { background: white; width: 100%; max-width: 380px; padding: 40px; border-radius: var(--radius); }
+        .modal-box h3 { margin: 0 0 15px 0; font-weight: 800; letter-spacing: -0.5px; }
+        .modal-box input, .modal-box select { width: 100%; padding: 12px; margin-top: 8px; border-radius: var(--radius); border: 1px solid var(--border-sharp); box-sizing: border-box; font-size: 14px; background: #f9fafb; }
+
+        .save-btn { width: 100%; padding: 14px; margin-top: 24px; background: var(--sidebar-bg); border: none; color: white; font-weight: 700; text-transform: uppercase; cursor: pointer; transition: 0.2s; }
+        .save-btn:hover { background: var(--accent); color: var(--sidebar-bg); }
+        .mini-delete-btn { background: #fff1f2; color: #be123c; border: 1px solid #fecaca; padding: 4px 8px; font-size: 10px; font-weight: 700; cursor: pointer; border-radius: 2px; }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+    <div class="profile-card">
+        <div class="avatar-container">
+            <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+        </div>
+        <div style="text-align:center; margin-bottom:32px;">
+            <h2 id="fullName" style="margin:0; font-size:26px; font-weight:800; letter-spacing: -1px;">Loading Profile...</h2>
+        </div>
+
+        <div class="info-section">
+            <div class="info-row"><span class="label">Username:</span><span class="value" id="username"></span></div>
+            <div class="info-row"><span class="label">Email:</span><span class="value" id="email"></span></div>
+            <div class="info-row"><span class="label">Country:</span><span class="value" id="country"></span></div>
+            <div class="info-row"><span class="label">Timezone:</span><span class="value" id="displayTimezone"></span></div>
+        </div>
+
+        <div class="action-links">
+            <span onclick="openUpdate()" style="color: var(--text-dark);">Update Details</span>
+            <span class="timeslot-btn" onclick="openTimeslot()">Add Timeslot</span>
+            <span class="logout-btn" onclick="logout()">Logout</span>
+        </div>
+
+        <div id="slotDisplayList"></div>
+    </div>
+</div>
+
+<div class="modal" id="updateModal">
+    <div class="modal-box">
+        <h3>Update Settings</h3>
+        <input type="email" id="newEmail" placeholder="Email Address">
+        <input type="text" id="newCountry" placeholder="Country">
+        <select id="newTimezone"><option value="" disabled selected>Select Timezone</option></select>
+        <input type="password" id="newPassword" placeholder="New Password (optional)">
+        <button class="save-btn" onclick="saveChanges()">Save Profile</button>
+        <p onclick="document.getElementById('updateModal').style.display='none'" style="text-align:center; cursor:pointer; font-size:12px; margin-top:15px; color:var(--text-muted); text-decoration: underline;">Cancel</p>
+    </div>
+</div>
+
+<div class="modal" id="timeslotModal">
+    <div class="modal-box">
+        <h3>Free Timeslot</h3>
+        <select id="daySelect">
+            <option value="Monday">Monday</option><option value="Tuesday">Tuesday</option><option value="Wednesday">Wednesday</option>
+            <option value="Thursday">Thursday</option><option value="Friday">Friday</option><option value="Saturday">Saturday</option><option value="Sunday">Sunday</option>
+        </select>
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <div style="flex: 1;"><label style="font-size: 10px; font-weight: 700;">FROM</label><input type="time" id="startTime"></div>
+            <div style="flex: 1;"><label style="font-size: 10px; font-weight: 700;">TO</label><input type="time" id="endTime"></div>
+        </div>
+        <button class="save-btn" onclick="saveTimeslot()">Add Availability</button>
+        <p onclick="closeTimeslotModal()" style="text-align:center; cursor:pointer; font-size:12px; margin-top:15px; color:var(--text-muted); text-decoration: underline;">Cancel</p>
+    </div>
+</div>
+
+<script>
+    const API_URL = "http://localhost:8083";
+    const userId = localStorage.getItem("userId");
+
+    // --- Toastify Helper (Same format as YourBuddy) ---
+    function notify(message, type = "success") {
+        const isSuccess = type === "success";
+        const themeColor = isSuccess ? "#22c55e" : "#ef4444";
+
+        Toastify({
+            text: (isSuccess ? "● " : "● ") + message,
+            duration: 3500,
+            gravity: "top",
+            position: "right",
+            style: {
+                background: "#ffffff",
+                color: "#333333",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                borderRadius: "6px",
+                padding: "16px 20px",
+                fontWeight: "600",
+                fontSize: "14px",
+                borderBottom: `4px solid ${themeColor}`
+            },
+            stopOnFocus: true
+        }).showToast();
+    }
+
+    function init() {
+        if (!userId) { window.location.href = "login.html"; return; }
+
+        // Populate standard Timezones
+        const tzSelect = document.getElementById("newTimezone");
+        ["Asia/Kolkata", "America/New_York", "Europe/London", "Asia/Tokyo", "Asia/Dubai", "Australia/Sydney"].forEach(tz => {
+            const opt = document.createElement("option");
+            opt.value = tz; opt.textContent = tz;
+            tzSelect.appendChild(opt);
+        });
+
+        fetch(`${API_URL}/profile/${userId}`)
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById("fullName").textContent = data.fullName;
+                document.getElementById("username").textContent = data.username;
+                document.getElementById("email").textContent = data.email;
+                document.getElementById("country").textContent = data.country;
+                document.getElementById("displayTimezone").textContent = data.timezone || "Not set";
+
+                // Pre-fill modal
+                document.getElementById("newEmail").value = data.email;
+                document.getElementById("newCountry").value = data.country;
+                document.getElementById("newTimezone").value = data.timezone || "";
+            })
+            .catch(() => notify("Error connecting to server", "error"));
+        loadSlots();
+    }
+
+    function loadSlots() {
+        fetch(`${API_URL}/get-timeslots/${userId}`).then(res => res.json()).then(data => {
+            const area = document.getElementById("slotDisplayList");
+            if(!data || data.length === 0) {
+                area.innerHTML = `<h4 style="margin-top:20px; font-size:12px; color:var(--text-muted);">No availability slots added.</h4>`;
+                return;
+            }
+            let html = `<h4 style="margin-top:20px; font-size:12px; text-transform:uppercase;">Availability</h4><table><thead><tr><th>Day</th><th>From</th><th>To</th><th>Action</th></tr></thead><tbody>`;
+            data.forEach(s => {
+                html += `<tr><td><b>${s.day}</b></td><td>${s.startTime}</td><td>${s.endTime}</td>
+                         <td><button class="mini-delete-btn" onclick="deleteSlot(${s.id})">Delete</button></td></tr>`;
+            });
+            area.innerHTML = html + `</tbody></table>`;
+        });
+    }
+
+    function saveChanges() {
+        fetch(`${API_URL}/update-profile`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                id: userId,
+                email: document.getElementById("newEmail").value,
+                country: document.getElementById("newCountry").value,
+                timezone: document.getElementById("newTimezone").value,
+                password: document.getElementById("newPassword").value
+            })
+        }).then(res => {
+            if(res.ok) {
+                notify("Profile updated successfully!");
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                notify("Failed to update profile", "error");
+            }
+        }).catch(() => notify("Server Error", "error"));
+    }
+
+    function saveTimeslot() {
+        const start = document.getElementById("startTime").value;
+        const end = document.getElementById("endTime").value;
+        if(!start || !end) { notify("Please select times", "error"); return; }
+
+        fetch(`${API_URL}/add-timeslot`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                userId: userId,
+                day: document.getElementById("daySelect").value,
+                startTime: start,
+                endTime: end
+            })
+        }).then(res => {
+            if(res.ok) {
+                notify("New availability added!");
+                closeTimeslotModal();
+                loadSlots();
+            } else {
+                notify("Error saving slot", "error");
+            }
+        });
+    }
+
+    function deleteSlot(id) {
+        if(!confirm("Are you sure you want to delete this slot?")) return;
+        fetch(`${API_URL}/delete-timeslot/${id}`, { method: "DELETE" }).then(res => {
+            if(res.ok) {
+                notify("Timeslot removed successfully");
+                loadSlots();
+            } else {
+                notify("Delete failed", "error");
+            }
+        });
+    }
+
+    function openUpdate() { document.getElementById("updateModal").style.display = "flex"; }
+    function openTimeslot() { document.getElementById("timeslotModal").style.display = "flex"; }
+    function closeTimeslotModal() { document.getElementById("timeslotModal").style.display = "none"; }
+
+    function logout() {
+        notify("Logging out... see you soon!");
+        localStorage.clear();
+        setTimeout(() => window.location.href="login.html", 1200);
+    }
+
+    window.onload = init;
+</script>
+</body>
+</html>
